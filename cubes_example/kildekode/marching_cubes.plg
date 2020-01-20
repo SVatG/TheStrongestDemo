@@ -1,0 +1,43 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: marching_cubes - Win32 Release--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP889.tmp" with contents
+[
+/nologo /ML /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /Fp"Release/marching_cubes.pch" /YX /Fo"Release/" /Fd"Release/" /FD /c 
+"D:\ferdig\kildekode\lib\glwin.cpp"
+"D:\ferdig\kildekode\lib\kvil.cpp"
+"D:\ferdig\kildekode\main.cpp"
+"D:\ferdig\kildekode\mcubes.cpp"
+]
+Creating command line "cl.exe @C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP889.tmp" 
+Creating temporary file "C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP88A.tmp" with contents
+[
+kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib opengl32.lib glu32.lib lib/libjpeg.lib lib/libpng.lib lib/zlibstat.lib /nologo /subsystem:console /incremental:no /pdb:"Release/marching_cubes.pdb" /machine:I386 /out:"Release/marching_cubes.exe" 
+.\Release\glwin.obj
+.\Release\kvil.obj
+.\Release\main.obj
+.\Release\mcubes.obj
+]
+Creating command line "link.exe @C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP88A.tmp"
+<h3>Output Window</h3>
+Compiling...
+glwin.cpp
+D:\ferdig\kildekode\lib\glwin.cpp(99) : warning C4244: 'initializing' : conversion from 'unsigned long' to 'unsigned char', possible loss of data
+D:\ferdig\kildekode\lib\glwin.cpp(105) : warning C4244: 'initializing' : conversion from 'unsigned long' to 'unsigned char', possible loss of data
+kvil.cpp
+main.cpp
+mcubes.cpp
+Linking...
+
+
+
+<h3>Results</h3>
+marching_cubes.exe - 0 error(s), 2 warning(s)
+</pre>
+</body>
+</html>

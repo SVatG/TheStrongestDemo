@@ -1,0 +1,23 @@
+#include <nds.h>
+#include <nds/fifocommon.h>
+#include <maxmod7.h>
+
+int main(int argc, char ** argv)
+{
+	//enable  sound 
+
+	powerOn(POWER_SOUND);
+	writePowerManagement(PM_CONTROL_REG,(readPowerManagement(PM_CONTROL_REG)&~PM_SOUND_MUTE)|PM_SOUND_AMP );
+
+	irqInit();
+	irqEnable(IRQ_VBLANK);
+	fifoInit();
+ 
+	mmInstall( FIFO_MAXMOD );
+
+	for(;;)
+	{
+		swiWaitForVBlank();
+//		fifoSendValue32(12,mmLayerMain.row);
+	}
+}
