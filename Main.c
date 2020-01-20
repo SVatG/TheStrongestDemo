@@ -1,79 +1,243 @@
 #include <nds.h>
 #include <nds/fifocommon.h>
-#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <nds/arm9/trig_lut.h>
+#include <nds/registers_alt.h>
+#include <maxmod9.h>
 
-#include "gfx/pucmcawesome.png.h"
-#include "gfx/bgbottom.png.h"
-#include "gfx/bgtop.png.h"
+#include "gfx/backdrop.png.h"
 
-int main()
-{
+#include "DS3D.h"
+
+// #include "glyphs.h"
+// #include "metaballs.h"
+// #include "rainbow.h"
+// #include "rad_blur.h"
+
+#include "Worm.h"
+#include "Feedback.h"
+
+#include "nitrofs.h"
+#include "ARM.h"
+
+#include "amigadisco2.h"
+
+uint8_t DTCM_DATA dtcm_buffer[10240];
+// uint8_t* dtcm_buffer = (uint8_t*)(0x027C0000);
+
+volatile u32 frame;
+void vblank() {
+	frame++;
+}
+
+u8 screen_flip = 0;
+void flipLCD() {
+	screen_flip ^= 1;
+	if( screen_flip ) {
+		POWER_CR &= ~POWER_SWAP_LCDS;
+	}
+	else {
+		POWER_CR |= POWER_SWAP_LCDS;
+	}
+}
+
+// Good kludge
+
+// int32_t sinFixed(int a) { return sinLerp(a<<6); }
+
+int main(void){
+	powerON(POWER_ALL);
+
+//	consoleDemoInit();
+
+// 	iprintf ("IRQ init\n" );
+	
 // 	irqInit();
-// 	irqEnable(IRQ_VBLANK);
+// 	irqEnable( IRQ_ALL );
+
+	irqSet( IRQ_VBLANK, vblank );
+	
+// 	iprintf ("IRQ GET, FIFO init\n" );
 // 	fifoInit();
-	videoSetMode(MODE_5_2D);
-	videoSetModeSub(MODE_5_2D);
+// 	iprintf ("FIFO GET\n" );
+	
+	s8 mode = 4;
+	
+// 	iprintf("NitroFS init\n");
 
-	vramSetBankA(VRAM_A_MAIN_SPRITE);
-	vramSetBankB(VRAM_B_MAIN_BG_0x06000000);
-	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
-	vramSetBankD(VRAM_D_SUB_SPRITE);
+	if(!nitroFSInitAdv(DEFAULT_FILENAME))
+	{
+// 		iprintf("NitroFS init failed.\n");
+		for(;;);
+	}
 
-	oamInit(&oamMain, SpriteMapping_1D_128, false);
-	oamInit(&oamSub, SpriteMapping_1D_128, false);
+// 	iprintf ("claiming WRAM\n" );
+	
+// 	iprintf ("WRAM get\n" );
 
-	u16* puc = oamAllocateGfx(&oamMain, SpriteSize_32x32, SpriteColorFormat_256Color);
-	dmaCopy((u8*)pucmcawesome_pngTiles, puc, 32*32*6);
-	dmaCopy(pucmcawesome_pngPal, SPRITE_PALETTE, 512);
+// 	mm_ds_system sys;
+// 	sys.mod_count = MSL_NSONGS;
+// 	sys.samp_count= MSL_NSAMPS;
+// 	sys.mem_bank = malloc( MSL_BANKSIZE * 4 );
+// 	sys.fifo_channel = FIFO_MAXMOD;
+// 	mmInit( &sys );
+// 	mmSoundBankInFiles( "nitro:/sounds.bin" );
+	
+// 	mmInitDefault( "nitro:/Mods.msl" );
+// 	mmLoad( MOD_AMIGADISCO2 );
+// 	mmStart( MOD_AMIGADISCO2, MM_PLAY_LOOP );
 
-	int bg = bgInit(3, BgType_Bmp8, BgSize_B8_256x256, 0,0);
-	dmaCopy(bgtop_pngBitmap, bgGetGfxPtr(bg), 256*256);
-	dmaCopy(bgtop_pngPal, BG_PALETTE, 256*2);
 
-	bg = bgInitSub(3, BgType_Bmp8, BgSize_B8_256x256, 0,0);
-	dmaCopy(bgbottom_pngBitmap, bgGetGfxPtr(bg), 256*256);
-	dmaCopy(bgbottom_pngPal, BG_PALETTE_SUB, 256*2);
+// iprintf ("Worm get\n" );
+	
 
-	int x = 0;
-	int y = 0;
-	int frame = 0;
-	int framedelay = 0;
-	while( 1 ) {		
-// 		iprintf("\n Lets print pretty text on the\n NDS screen ");
-// 		iprintf("\x1b[32musing devkitpro!\n\n");
-// 		iprintf("\x1b[32;1m All we need now is actual game\n code!\x1b[39m");
-		scanKeys();
-		int keys = keysHeld();
+// iprintf ("Doo get\n" );
+// 	for(int t=0;;t++) {
+// 		swiWaitForVBlank();
+// 		RenderWorm( t );
+// 		DSFlush(0);
+// 	}
 
-		if( keys & KEY_DOWN ) {
-			y++;
-		}
-		if( keys & KEY_UP) {
-			y--;
-		}
-		if( keys & KEY_RIGHT) {
-			x++;
-		}
-		if( keys & KEY_LEFT) {
-			x--;
-		}
-		framedelay = (framedelay + 1)%3;
-		if(framedelay == 0) {
-			frame = (frame + 1) % 6;
-		}
-		oamSet(
-			&oamMain,
-			0, x, y, 0, 0,
-			SpriteSize_32x32,
-			SpriteColorFormat_256Color,
-			puc + (frame * 32 * 32)/2,
-			-1, false, false, false, false, false
-		);
 
+// 	BLEND_CR = BLEND_FADE_BLACK | BLEND_SRC_BG0 | BLEND_SRC_BG1 | BLEND_SRC_BG2 | BLEND_SRC_BG3;
+// 	BLEND_Y = 0x1F;
+
+	// StartMetaballs();
+
+	frame = 0;
+	u32 ccount;
+	ClaimWRAM();
+	StartWorm( "nitro:/test.map", dtcm_buffer );
+
+	while( 1 ) {
 		swiWaitForVBlank();
-		oamUpdate(&oamMain);
-		oamUpdate(&oamSub);
+		RenderWorm( ccount );
+		DSFlush(0);
+		ccount++;
 	}
 	
+	ccount = 0;
+	for(int t=0;;t++) {
+		switch( mode ) {
+			case 0:
+				if( frame <= 31 ) {
+					BLEND_CR = BLEND_FADE_BLACK | BLEND_SRC_BG0 | BLEND_SRC_BG1 | BLEND_SRC_BG2 | BLEND_SRC_BG3;
+					BLEND_Y = 31 - frame;
+				} else if( frame >= 770 ) {
+					BLEND_CR = BLEND_FADE_BLACK | BLEND_SRC_BG0 | BLEND_SRC_BG1 | BLEND_SRC_BG2 | BLEND_SRC_BG3;
+					BLEND_Y = frame - 770;
+				} else {
+					BLEND_CR = BLEND_NONE;
+				}
+				
+				swiWaitForVBlank();
+				RenderMetaballs();
+				
+				if( frame >= 800 ) {
+					flipLCD();
+					StopMetaballs();
+					StartRainbow();
+					frame = 0;
+					mode = 1;
+				}
+			break;
+			case 1:
+				if( frame <= 31 ) {
+					BLEND_CR = BLEND_FADE_BLACK | BLEND_SRC_BG0 | BLEND_SRC_BG1 | BLEND_SRC_BG2 | BLEND_SRC_BG3;
+					BLEND_Y = 31 - frame;
+				} else if( frame >= 770 ) {
+					BLEND_CR = BLEND_FADE_BLACK | BLEND_SRC_BG0 | BLEND_SRC_BG1 | BLEND_SRC_BG2 | BLEND_SRC_BG3;
+					BLEND_Y = frame - 770;
+				} else {
+					BLEND_CR = BLEND_NONE;
+				}
+				
+				swiWaitForVBlank();
+				RenderRainbow();
+				
+				if( frame >= 800 ) {
+					flipLCD();
+					StopRainbow();
+					StartRadBlur();
+					frame = 0;
+					mode = 2;
+				}
+			break;
+			case 2:
+				if( frame <= 31 ) {
+					BLEND_CR = BLEND_FADE_BLACK | BLEND_SRC_BG0 | BLEND_SRC_BG1 | BLEND_SRC_BG2 | BLEND_SRC_BG3;
+					BLEND_Y = 31 - frame;
+				} else if( frame >= 770 ) {
+					BLEND_CR = BLEND_FADE_BLACK | BLEND_SRC_BG0 | BLEND_SRC_BG1 | BLEND_SRC_BG2 | BLEND_SRC_BG3;
+					BLEND_Y = frame - 770;
+				} else {
+					BLEND_CR = BLEND_NONE;
+				}
+				
+				RenderRadBlur();
+				swiWaitForVBlank();
+				
+				if( frame >= 800 ) {
+					flipLCD();
+					ccount = 0;
+					StopRadBlur();
+					StartFeedback();
+					frame = 0;
+					mode = 3;
+				}
+			break;
+			case 3:
+				if( frame <= 31 ) {
+					BLEND_CR = BLEND_FADE_BLACK | BLEND_SRC_BG0 | BLEND_SRC_BG1 | BLEND_SRC_BG2 | BLEND_SRC_BG3;
+					BLEND_Y = 31 - frame;
+				} else if( frame >= 770 ) {
+					BLEND_CR = BLEND_FADE_BLACK | BLEND_SRC_BG0 | BLEND_SRC_BG1 | BLEND_SRC_BG2 | BLEND_SRC_BG3;
+					BLEND_Y = frame - 770;
+				} else {
+					BLEND_CR = BLEND_NONE;
+				}
+				
+				swiWaitForVBlank();
+				RenderFeedback( ccount, frame > 740 );
+				DSFlush(DS_FLUSH_NO_SORTING);
+				ccount++;
+				
+				if( frame >= 800 ) {
+					flipLCD();
+					StopFeedback();
+					StartWorm( "nitro:/test.map", dtcm_buffer );
+					ccount = 0;
+					frame = 0;
+					mode = 4;
+				}
+			break;
+			case 4:
+				if( frame <= 31 ) {
+					BLEND_CR = BLEND_FADE_BLACK | BLEND_SRC_BG0 | BLEND_SRC_BG1 | BLEND_SRC_BG2 | BLEND_SRC_BG3;
+					BLEND_Y = 31 - frame;
+				} else if( frame >= 770 ) {
+					BLEND_CR = BLEND_FADE_BLACK | BLEND_SRC_BG0 | BLEND_SRC_BG1 | BLEND_SRC_BG2 | BLEND_SRC_BG3;
+					BLEND_Y = frame - 770;
+				} else {
+					BLEND_CR = BLEND_NONE;
+				}
+				
+				swiWaitForVBlank();
+				RenderWorm( ccount );
+				DSFlush(0);
+				ccount++;
+				
+				if( frame >= 800 ) {
+					flipLCD();
+					StopWorm();
+					StartMetaballs();
+					frame = 0;
+					mode = 0;
+				}
+			break;
+		}
+	}
+ 
 	return 0;
 }
